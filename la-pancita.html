@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>La Pancita – Sistema de Ventas</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/recharts/2.8.0/Recharts.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:#f5f3f0;overflow:hidden}
+.app{display:flex;height:100vh}
+.sidebar{width:220px;min-width:220px;background:#fff;border-right:1px solid #ece9e4;display:flex;flex-direction:column;padding:20px 0}
+.sidebar-logo{padding:0 16px 20px;display:flex;align-items:center;gap:10px;border-bottom:1px solid #ece9e4}
+.logo-icon{width:40px;height:40px;background:#e8453c;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.logo-text h2{font-family:'Playfair Display',serif;font-size:14px;color:#1a1a1a}
+.logo-text p{font-size:11px;color:#999}
+.nav{padding:14px 10px;flex:1}
+.nav-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;cursor:pointer;font-size:13px;color:#555;font-weight:500;transition:all .15s;margin-bottom:2px;user-select:none}
+.nav-item:hover{background:#f5f3f0;color:#1a1a1a}
+.nav-item.active{background:#e8453c;color:#fff}
+.nav-icon{font-size:15px;width:20px;text-align:center}
+.main{flex:1;overflow-y:auto;background:#f5f3f0}
+.page{padding:28px 32px;max-width:1100px}
+.page-header{margin-bottom:24px;display:flex;justify-content:space-between;align-items:flex-start}
+.page-title{font-family:'Playfair Display',serif;font-size:36px;color:#1a1a1a;line-height:1}
+.page-subtitle{font-size:13px;color:#888;margin-top:6px}
+.date-badge{background:#fff;border:1px solid #ece9e4;border-radius:10px;padding:7px 12px;font-size:12px;color:#555;display:flex;align-items:center;gap:6px;white-space:nowrap}
+.stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px}
+.stat-card{background:#fff;border-radius:16px;padding:18px;border:1px solid #ece9e4;position:relative}
+.stat-icon{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:17px;margin-bottom:10px}
+.stat-icon.green{background:#f0faf4}.stat-icon.blue{background:#eef4ff}.stat-icon.yellow{background:#fffbea}.stat-icon.pink{background:#fff0f0}
+.stat-value{font-family:'Playfair Display',serif;font-size:26px;color:#1a1a1a}
+.stat-label{font-size:12px;color:#888;margin-top:3px}
+.stat-arrow{position:absolute;top:18px;right:18px;color:#888;font-size:16px}
+.charts-row{display:grid;grid-template-columns:1fr 360px;gap:18px;margin-bottom:20px}
+.card{background:#fff;border-radius:16px;padding:22px;border:1px solid #ece9e4}
+.card-title{font-size:15px;font-weight:600;color:#1a1a1a;margin-bottom:18px;display:flex;align-items:center;gap:8px}
+.top-item{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid #f5f3f0}
+.top-item:last-child{border-bottom:none}
+.top-num{width:24px;height:24px;border-radius:50%;background:#f5f3f0;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:#666;flex-shrink:0}
+.top-info{flex:1}.top-name{font-size:13px;font-weight:500;color:#1a1a1a}.top-sold{font-size:11px;color:#999}
+.top-price{font-size:13px;font-weight:600;color:#1a1a1a}
+/* POS */
+.pos-layout{display:grid;grid-template-columns:1fr 320px;height:100vh;overflow:hidden}
+.pos-left{overflow-y:auto;padding:24px 24px 24px 32px}
+.pos-right{background:#fff;border-left:1px solid #ece9e4;padding:20px;display:flex;flex-direction:column;overflow-y:auto}
+.search-bar{display:flex;align-items:center;gap:10px;background:#fff;border:1px solid #ece9e4;border-radius:12px;padding:9px 14px;margin-bottom:14px}
+.search-bar input{border:none;outline:none;width:100%;font-size:13px;font-family:'DM Sans',sans-serif;background:transparent;color:#333}
+.search-bar input::placeholder{color:#bbb}
+.cat-filters{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:16px}
+.cat-btn{padding:6px 14px;border-radius:20px;border:1.5px solid #ddd;background:#fff;font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:500;color:#555;transition:all .15s}
+.cat-btn:hover{border-color:#e8453c;color:#e8453c}
+.cat-btn.active{background:#e8453c;border-color:#e8453c;color:#fff}
+.products-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px}
+.product-card{background:#fff;border-radius:12px;padding:14px;border:1.5px solid #ece9e4;cursor:pointer;transition:all .15s}
+.product-card:hover{border-color:#e8453c;transform:translateY(-2px);box-shadow:0 4px 12px rgba(232,69,60,.1)}
+.product-cat-tag{font-size:10px;color:#888;background:#f5f3f0;padding:2px 7px;border-radius:5px;display:inline-block;margin-bottom:6px}
+.product-name{font-size:13px;font-weight:600;color:#1a1a1a;margin-bottom:5px;line-height:1.3}
+.product-price{font-size:14px;font-weight:700;color:#e8453c}
+.cart-client{border:1.5px solid #ece9e4;border-radius:10px;padding:9px 12px;display:flex;align-items:center;gap:8px;margin-bottom:14px}
+.cart-client input{border:none;outline:none;font-size:13px;font-family:'DM Sans',sans-serif;flex:1;background:transparent;color:#333}
+.cart-empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#ccc;gap:8px}
+.cart-empty span{font-size:36px}.cart-empty p{font-size:12px}
+.cart-items{flex:1;overflow-y:auto;margin-bottom:10px}
+.cart-item{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid #f5f3f0}
+.cart-item-name{flex:1;font-size:12px;color:#333;font-weight:500}
+.cart-qty{display:flex;align-items:center;gap:5px}
+.qty-btn{width:20px;height:20px;border-radius:50%;border:1.5px solid #ddd;background:#fff;cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;color:#555;transition:all .1s;line-height:1}
+.qty-btn:hover{border-color:#e8453c;color:#e8453c}
+.cart-item-price{font-size:12px;font-weight:600;color:#1a1a1a;min-width:44px;text-align:right}
+.cart-totals{border-top:1px solid #ece9e4;padding-top:10px;margin-bottom:10px}
+.cart-row{display:flex;justify-content:space-between;font-size:12px;color:#888;margin-bottom:5px}
+.cart-total-row{display:flex;justify-content:space-between;font-size:15px;font-weight:700;color:#1a1a1a;margin-top:6px}
+.cart-total-row span:last-child{color:#e8453c}
+.payment-methods{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:10px}
+.pay-btn{padding:9px 4px;border-radius:10px;border:1.5px solid #ddd;background:#fff;cursor:pointer;font-size:11px;font-family:'DM Sans',sans-serif;font-weight:500;color:#555;display:flex;flex-direction:column;align-items:center;gap:3px;transition:all .15s}
+.pay-btn.active{border-color:#e8453c;background:#fff5f5;color:#e8453c}
+.pay-btn span:first-child{font-size:15px}
+.pago-con{border:1.5px solid #ece9e4;border-radius:10px;padding:7px 12px;display:flex;justify-content:space-between;align-items:center;font-size:12px;color:#888;margin-bottom:10px}
+.pago-con input{border:none;outline:none;font-size:13px;font-family:'DM Sans',sans-serif;text-align:right;width:80px;background:transparent}
+.action-row{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:8px}
+.btn-ghost{padding:9px;border-radius:10px;border:1.5px solid #ddd;background:#fff;cursor:pointer;font-size:13px;font-family:'DM Sans',sans-serif;font-weight:500;color:#555;transition:all .15s}
+.btn-ghost:hover{border-color:#999}
+.btn-save{padding:9px;border-radius:10px;border:1.5px solid #d4a800;background:#fff;cursor:pointer;font-size:13px;font-family:'DM Sans',sans-serif;font-weight:500;color:#d4a800;transition:all .15s}
+.btn-confirm{width:100%;padding:13px;border-radius:12px;background:#e8453c;color:#fff;border:none;cursor:pointer;font-size:14px;font-family:'DM Sans',sans-serif;font-weight:600;transition:all .15s}
+.btn-confirm:hover{background:#c9352d}
+.btn-confirm:disabled{background:#f0b9b7;cursor:not-allowed}
+.btn-primary{padding:9px 18px;background:#e8453c;color:#fff;border:none;border-radius:10px;cursor:pointer;font-size:13px;font-family:'DM Sans',sans-serif;font-weight:600;transition:all .15s;display:flex;align-items:center;gap:6px}
+.btn-primary:hover{background:#c9352d}
+/* PRODUCTOS */
+.table{width:100%;border-collapse:collapse}
+.table th{text-align:left;padding:11px 14px;font-size:12px;color:#888;font-weight:500;border-bottom:1.5px solid #ece9e4}
+.table td{padding:14px;font-size:13px;border-bottom:1px solid #f5f3f0;vertical-align:middle}
+.table tr:last-child td{border-bottom:none}
+.prod-icon{width:34px;height:34px;background:#fff0f0;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:15px}
+.badge{padding:3px 9px;border-radius:7px;font-size:11px;font-weight:500;background:#f5f3f0;color:#555;display:inline-block}
+.price-red{color:#e8453c;font-weight:600}
+.icon-btn{background:none;border:none;cursor:pointer;padding:5px;border-radius:6px;transition:all .15s;font-size:15px}
+.icon-btn:hover{background:#f5f3f0}
+.icon-btn.del:hover{background:#fff0f0;color:#e8453c}
+/* HISTORIAL */
+.filter-tabs{display:flex;gap:7px;margin-bottom:18px}
+.filter-tab{padding:7px 16px;border-radius:20px;border:1.5px solid #ddd;background:#fff;font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:500;color:#555;transition:all .15s}
+.filter-tab.active{background:#e8453c;border-color:#e8453c;color:#fff}
+.pedido-row{background:#fff;border-radius:14px;padding:14px 18px;margin-bottom:8px;border:1px solid #ece9e4;display:flex;align-items:center;gap:14px;cursor:pointer;transition:all .15s}
+.pedido-row:hover{box-shadow:0 2px 8px rgba(0,0,0,.06)}
+.pedido-icon{width:34px;height:34px;background:#fff0f0;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
+.pedido-info{flex:1}
+.pedido-folio{font-size:14px;font-weight:600;color:#1a1a1a}
+.pedido-meta{font-size:11px;color:#999;margin-top:2px}
+.pedido-total{text-align:right}
+.pedido-amount{font-size:15px;font-weight:700;color:#e8453c}
+.pedido-method{font-size:11px;color:#999}
+.estado-badge{padding:2px 9px;border-radius:20px;font-size:10px;font-weight:600}
+.estado-Pagado{background:#e8f5e9;color:#2e7d32}
+.estado-Consumiendo{background:#fff8e1;color:#f57f17}
+.estado-Cancelado{background:#fce4ec;color:#c62828}
+.pedido-detail{background:#f9f8f6;border-radius:10px;padding:12px 14px;margin-top:8px;margin-bottom:4px}
+.detail-item{display:flex;justify-content:space-between;font-size:12px;color:#555;padding:3px 0}
+/* CLIENTES */
+.cliente-card{background:#fff;border-radius:14px;padding:14px 18px;border:1px solid #ece9e4;display:flex;align-items:center;gap:12px;margin-bottom:8px}
+.cliente-avatar{width:38px;height:38px;border-radius:50%;background:#e8453c;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:15px;flex-shrink:0}
+.cliente-name{font-size:14px;font-weight:600;color:#1a1a1a}
+.cliente-meta{font-size:11px;color:#999;margin-top:2px}
+.cliente-total{margin-left:auto;font-size:14px;font-weight:700;color:#e8453c}
+/* AJUSTES */
+.settings-section{background:#fff;border-radius:16px;padding:22px;border:1px solid #ece9e4;margin-bottom:18px}
+.settings-title{font-size:15px;font-weight:600;color:#1a1a1a;margin-bottom:3px;display:flex;align-items:center;gap:8px}
+.settings-sub{font-size:12px;color:#888;margin-bottom:14px}
+.settings-input-row{display:flex;gap:10px}
+.settings-input{flex:1;border:1.5px solid #ece9e4;border-radius:10px;padding:9px 12px;font-size:13px;font-family:'DM Sans',sans-serif;outline:none}
+.settings-input:focus{border-color:#e8453c}
+.btn-dark{padding:9px 18px;background:#1a5c3a;color:#fff;border:none;border-radius:10px;cursor:pointer;font-size:13px;font-family:'DM Sans',sans-serif;font-weight:600;transition:all .15s;display:flex;align-items:center;gap:6px;white-space:nowrap}
+.corte-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:18px}
+.corte-card{border-radius:14px;padding:18px}
+.corte-card.main{background:#e8453c;color:#fff}
+.corte-card.white{background:#f5f3f0}
+.corte-label{font-size:12px;opacity:.8;margin-bottom:4px}
+.corte-value{font-family:'Playfair Display',serif;font-size:26px;font-weight:700}
+.metodo-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.metodo-card{background:#f5f3f0;border-radius:12px;padding:12px 14px;display:flex;align-items:center;gap:10px}
+.metodo-icon{font-size:18px}
+.metodo-label{font-size:11px;color:#888}
+.metodo-val{font-size:15px;font-weight:700;color:#1a1a1a}
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;z-index:100}
+.modal{background:#fff;border-radius:18px;padding:26px;width:400px;max-width:90vw}
+.modal-title{font-size:17px;font-weight:700;color:#1a1a1a;margin-bottom:18px}
+.form-group{margin-bottom:12px}
+.form-label{font-size:12px;color:#555;font-weight:500;margin-bottom:5px;display:block}
+.form-input{width:100%;border:1.5px solid #ece9e4;border-radius:10px;padding:9px 12px;font-size:13px;font-family:'DM Sans',sans-serif;outline:none}
+.form-input:focus{border-color:#e8453c}
+.form-select{width:100%;border:1.5px solid #ece9e4;border-radius:10px;padding:9px 12px;font-size:13px;font-family:'DM Sans',sans-serif;outline:none;background:#fff}
+.modal-actions{display:flex;gap:10px;margin-top:18px}
+.modal-actions .btn-ghost{flex:1}
+.modal-actions .btn-primary{flex:1;justify-content:center}
+/* TOAST */
+.toast{position:fixed;bottom:20px;right:20px;background:#1a1a1a;color:#fff;padding:11px 18px;border-radius:12px;font-size:13px;z-index:200;animation:slideUp .3s ease}
+@keyframes slideUp{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}
+/* MOBILE */
+@media(max-width:768px){
+  .sidebar{width:60px;min-width:60px}
+  .logo-text,.nav-item span:last-child,.sidebar-logo p{display:none}
+  .sidebar-logo{justify-content:center;padding:0 0 16px}
+  .nav-item{justify-content:center;padding:10px}
+  .stat-grid{grid-template-columns:1fr 1fr}
+  .charts-row{grid-template-columns:1fr}
+  .pos-layout{grid-template-columns:1fr}
+  .pos-right{position:fixed;bottom:0;left:0;right:0;height:50vh;border-top:2px solid #ece9e4;border-left:none;z-index:50}
+  .pos-left{padding-bottom:52vh}
+  .corte-grid{grid-template-columns:1fr}
+  .metodo-row{grid-template-columns:1fr}
+  .page{padding:20px 16px}
+}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useMemo } = React;
+const { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } = Recharts;
+
+const PRODUCTOS_INICIALES = [
+  { id:1, nombre:"Pancita de Res (Grande)", desc:"Caldo de panza de res, chipotle y especias", categoria:"Plato", precio:80, activo:true },
+  { id:2, nombre:"Pancita Chica", desc:"Porción pequeña, ideal para probar", categoria:"Plato", precio:50, activo:true },
+  { id:3, nombre:"Litro para Llevar", desc:"Caldo listo para calentar en casa", categoria:"Para Llevar", precio:120, activo:true },
+  { id:4, nombre:"Medio Litro para Llevar", desc:"Ideal para una persona", categoria:"Para Llevar", precio:70, activo:true },
+  { id:5, nombre:"Tortillas (3 pz)", desc:"Tortillas de maíz frescas", categoria:"Extra", precio:10, activo:true },
+  { id:6, nombre:"Cerveza", desc:"Cerveza fría del día", categoria:"Bebida", precio:25, activo:true },
+  { id:7, nombre:"Agua de Sabor", desc:"Agua fresca del día", categoria:"Bebida", precio:20, activo:true },
+  { id:8, nombre:"Limones (3 pz)", desc:"Limones frescos", categoria:"Extra", precio:5, activo:true },
+  { id:9, nombre:"Refresco", desc:"Refresco de lata", categoria:"Bebida", precio:20, activo:true },
+  { id:10, nombre:"Consomé", desc:"Consomé de res", categoria:"Plato", precio:35, activo:true },
+  { id:11, nombre:"Pastel", desc:"Pastel del día", categoria:"Plato", precio:50, activo:true },
+  { id:12, nombre:"Gelatina", desc:"Gelatina de sabores", categoria:"Postre", precio:15, activo:true },
+];
+
+const PEDIDOS_INICIALES = [
+  { id:1007, cliente:"saul", fecha:"2026-02-25T15:41:00", items:[{nombre:"Pancita de Res (Grande)",precio:80,qty:1},{nombre:"Litro para Llevar",precio:120,qty:1},{nombre:"Cerveza",precio:25,qty:1}], total:225, metodo:"Efectivo", estado:"Pagado" },
+  { id:1006, cliente:"Cliente de Prueba", fecha:"2026-02-25T15:36:00", items:[{nombre:"Pancita Chica",precio:50,qty:1},{nombre:"Tortillas (3 pz)",precio:10,qty:3}], total:80, metodo:"Efectivo", estado:"Pagado" },
+  { id:1005, cliente:"Cliente Test", fecha:"2026-02-25T15:35:00", items:[{nombre:"Pancita de Res (Grande)",precio:80,qty:2}], total:160, metodo:"Efectivo", estado:"Pagado" },
+  { id:1004, cliente:"saul", fecha:"2026-02-25T15:18:00", items:[{nombre:"Litro para Llevar",precio:120,qty:1},{nombre:"Medio Litro para Llevar",precio:70,qty:1},{nombre:"Tortillas (3 pz)",precio:10,qty:2},{nombre:"Agua de Sabor",precio:20,qty:1}], total:310, metodo:"Efectivo", estado:"Pagado" },
+  { id:1003, cliente:"JOS", fecha:"2026-02-25T15:18:00", items:[{nombre:"Pancita de Res (Grande)",precio:80,qty:3},{nombre:"Cerveza",precio:25,qty:2},{nombre:"Tortillas (3 pz)",precio:10,qty:4}], total:470, metodo:"Efectivo", estado:"Pagado" },
+  { id:1002, cliente:"lili", fecha:"2026-02-25T15:09:00", items:[{nombre:"Medio Litro para Llevar",precio:70,qty:2},{nombre:"Litro para Llevar",precio:120,qty:1},{nombre:"Agua de Sabor",precio:20,qty:1}], total:280, metodo:"Efectivo", estado:"Pagado" },
+  { id:1001, cliente:"carlos", fecha:"2026-02-25T14:50:00", items:[{nombre:"Pancita de Res (Grande)",precio:80,qty:1}], total:80, metodo:"Efectivo", estado:"Pagado" },
+];
+
+const SEMANA_DATA = [
+  {dia:"Jue",ventas:0},{dia:"Vie",ventas:0},{dia:"Sáb",ventas:0},
+  {dia:"Dom",ventas:0},{dia:"Lun",ventas:0},{dia:"Mar",ventas:0},{dia:"Mié",ventas:1580},
+];
+
+const CATEGORIAS = ["Todos","Plato","Para Llevar","Extra","Bebida","Postre"];
+
+function App() {
+  const [page, setPage] = useState("resumen");
+  const [productos, setProductos] = useState(PRODUCTOS_INICIALES);
+  const [pedidos, setPedidos] = useState(PEDIDOS_INICIALES);
+  const [negocioNombre, setNegocioNombre] = useState("La Pancita");
+  const [toast, setToast] = useState(null);
+
+  const showToast = (msg) => { setToast(msg); setTimeout(() => setToast(null), 2500); };
+
+  const addPedido = (pedido) => { setPedidos(prev => [pedido, ...prev]); showToast("✅ Pedido #" + pedido.id + " confirmado"); };
+  const deleteProducto = (id) => { setProductos(prev => prev.filter(p => p.id !== id)); showToast("🗑️ Producto eliminado"); };
+  const addProducto = (prod) => { setProductos(prev => [...prev, { ...prod, id: Date.now(), activo: true }]); showToast("✅ Producto agregado"); };
+
+  const navItems = [
+    { id:"resumen", icon:"📊", label:"Resumen" },
+    { id:"pos", icon:"🛒", label:"Nuevo Pedido" },
+    { id:"productos", icon:"📦", label:"Productos" },
+    { id:"clientes", icon:"👥", label:"Clientes" },
+    { id:"historial", icon:"🕐", label:"Historial" },
+    { id:"ajustes", icon:"⚙️", label:"Ajustes" },
+  ];
+
+  return (
+    <div className="app">
+      <div className="sidebar">
+        <div className="sidebar-logo">
+          <div className="logo-icon">🍲</div>
+          <div className="logo-text"><h2>{negocioNombre}</h2><p>Sistema de Ventas</p></div>
+        </div>
+        <nav className="nav">
+          {navItems.map(item => (
+            <div key={item.id} className={"nav-item" + (page === item.id ? " active" : "")} onClick={() => setPage(item.id)}>
+              <span className="nav-icon">{item.icon}</span>
+              <span>{item.label}</span>
+            </div>
+          ))}
+        </nav>
+      </div>
+      <div className="main">
+        {page === "resumen"   && <ResumenPage pedidos={pedidos} />}
+        {page === "pos"       && <POSPage productos={productos} addPedido={addPedido} pedidos={pedidos} />}
+        {page === "productos" && <ProductosPage productos={productos} deleteProducto={deleteProducto} addProducto={addProducto} />}
+        {page === "clientes"  && <ClientesPage pedidos={pedidos} />}
+        {page === "historial" && <HistorialPage pedidos={pedidos} />}
+        {page === "ajustes"   && <AjustesPage negocioNombre={negocioNombre} setNegocioNombre={setNegocioNombre} pedidos={pedidos} showToast={showToast} />}
+      </div>
+      {toast && <div className="toast">{toast}</div>}
+    </div>
+  );
+}
+
+function ResumenPage({ pedidos }) {
+  const hoy = pedidos.filter(p => p.estado !== "Cancelado");
+  const totalHoy = hoy.reduce((s, p) => s + p.total, 0);
+  const ticketProm = hoy.length ? totalHoy / hoy.length : 0;
+  const clientes = new Set(hoy.map(p => p.cliente)).size;
+
+  const topPlatillos = useMemo(() => {
+    const map = {};
+    hoy.forEach(p => p.items.forEach(i => {
+      if (!map[i.nombre]) map[i.nombre] = { nombre: i.nombre, qty: 0, total: 0 };
+      map[i.nombre].qty += i.qty;
+      map[i.nombre].total += i.precio * i.qty;
+    }));
+    return Object.values(map).sort((a, b) => b.total - a.total).slice(0, 5);
+  }, [pedidos]);
+
+  const fecha = new Date().toLocaleDateString("es-MX", { weekday:"long", year:"numeric", month:"long", day:"numeric" });
+
+  return (
+    <div className="page">
+      <div className="page-header">
+        <div><h1 className="page-title">Resumen</h1><p className="page-subtitle">Resumen de tu negocio hoy</p></div>
+        <div className="date-badge">📅 {fecha}</div>
+      </div>
+      <div className="stat-grid">
+        <div className="stat-card"><div className="stat-icon green">💲</div><div className="stat-value">${totalHoy.toLocaleString()}</div><div className="stat-label">Ventas de hoy</div><span className="stat-arrow">↗</span></div>
+        <div className="stat-card"><div className="stat-icon blue">🛍️</div><div className="stat-value">{hoy.length}</div><div className="stat-label">Pedidos de hoy</div></div>
+        <div className="stat-card"><div className="stat-icon yellow">📈</div><div className="stat-value">${ticketProm.toFixed(2)}</div><div className="stat-label">Ticket promedio</div></div>
+        <div className="stat-card"><div className="stat-icon pink">👤</div><div className="stat-value">{clientes}</div><div className="stat-label">Clientes hoy</div></div>
+      </div>
+      <div className="charts-row">
+        <div className="card">
+          <div className="card-title">📅 Ventas de la Semana</div>
+          <ResponsiveContainer width="100%" height={200}>
+            <BarChart data={SEMANA_DATA} barSize={36}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#f0ede9" vertical={false} />
+              <XAxis dataKey="dia" axisLine={false} tickLine={false} tick={{fontSize:11,fill:"#999"}} />
+              <YAxis axisLine={false} tickLine={false} tick={{fontSize:11,fill:"#999"}} tickFormatter={v => "$"+v} />
+              <Tooltip formatter={v => ["$"+v,"Ventas"]} contentStyle={{borderRadius:10,border:"1px solid #ece9e4"}} />
+              <Bar dataKey="ventas" fill="#e8453c" radius={[6,6,0,0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+        <div className="card">
+          <div className="card-title">🏆 Top Platillos</div>
+          {topPlatillos.map((p, i) => (
+            <div key={p.nombre} className="top-item">
+              <div className="top-num">{i+1}</div>
+              <div className="top-info"><div className="top-name">{p.nombre}</div><div className="top-sold">{p.qty} vendidos</div></div>
+              <div className="top-price">${p.total}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function POSPage({ productos, addPedido, pedidos }) {
+  const [catActiva, setCatActiva] = useState("Todos");
+  const [busqueda, setBusqueda] = useState("");
+  const [carrito, setCarrito] = useState([]);
+  const [cliente, setCliente] = useState("");
+  const [metodo, setMetodo] = useState("Efectivo");
+  const [pagoCon, setPagoCon] = useState("");
+
+  const filtered = productos.filter(p => p.activo &&
+    (catActiva === "Todos" || p.categoria === catActiva) &&
+    p.nombre.toLowerCase().includes(busqueda.toLowerCase())
+  );
+
+  const addToCart = (prod) => {
+    setCarrito(prev => {
+      const ex = prev.find(i => i.id === prod.id);
+      if (ex) return prev.map(i => i.id === prod.id ? {...i, qty: i.qty+1} : i);
+      return [...prev, {...prod, qty:1}];
+    });
+  };
+
+  const updateQty = (id, delta) => {
+    setCarrito(prev => prev.map(i => i.id === id ? {...i, qty: i.qty+delta} : i).filter(i => i.qty > 0));
+  };
+
+  const subtotal = carrito.reduce((s, i) => s + i.precio * i.qty, 0);
+  const nextId = Math.max(...pedidos.map(p => p.id), 1000) + 1;
+
+  const confirmar = () => {
+    if (carrito.length === 0) return;
+    addPedido({ id: nextId, cliente: cliente || "Cliente", fecha: new Date().toISOString(), items: carrito.map(i => ({nombre:i.nombre,precio:i.precio,qty:i.qty})), total: subtotal, metodo, estado:"Pagado" });
+    setCarrito([]); setCliente(""); setPagoCon("");
+  };
+
+  return (
+    <div className="pos-layout">
+      <div className="pos-left">
+        <div className="search-bar">🔍 <input placeholder="Buscar producto..." value={busqueda} onChange={e => setBusqueda(e.target.value)} /></div>
+        <div className="cat-filters">
+          {CATEGORIAS.map(c => <button key={c} className={"cat-btn"+(catActiva===c?" active":"")} onClick={() => setCatActiva(c)}>{c}</button>)}
+        </div>
+        <div className="products-grid">
+          {filtered.map(prod => (
+            <div key={prod.id} className="product-card" onClick={() => addToCart(prod)}>
+              <span className="product-cat-tag">{prod.categoria}</span>
+              <div className="product-name">{prod.nombre}</div>
+              <div className="product-price">${prod.precio}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+      <div className="pos-right">
+        <div className="cart-client">👤 <input placeholder="Nombre del cliente" value={cliente} onChange={e => setCliente(e.target.value)} /></div>
+        {carrito.length === 0
+          ? <div className="cart-empty"><span>🛒</span><p>Agrega productos al pedido</p></div>
+          : <div className="cart-items">
+              {carrito.map(item => (
+                <div key={item.id} className="cart-item">
+                  <div className="cart-item-name">{item.nombre}</div>
+                  <div className="cart-qty">
+                    <button className="qty-btn" onClick={() => updateQty(item.id,-1)}>−</button>
+                    <span style={{fontSize:12,fontWeight:600,minWidth:14,textAlign:"center"}}>{item.qty}</span>
+                    <button className="qty-btn" onClick={() => updateQty(item.id,1)}>+</button>
+                  </div>
+                  <div className="cart-item-price">${item.precio*item.qty}</div>
+                </div>
+              ))}
+            </div>
+        }
+        <div className="cart-totals">
+          <div className="cart-row"><span>Subtotal</span><span>${subtotal}</span></div>
+          <div className="cart-row"><span>Descuento</span><span>$0</span></div>
+          <div className="cart-total-row"><span>Total</span><span>${subtotal}</span></div>
+        </div>
+        <div className="payment-methods">
+          {["Efectivo","Tarjeta","Transfer"].map(m => (
+            <button key={m} className={"pay-btn"+(metodo===m?" active":"")} onClick={() => setMetodo(m)}>
+              <span>{m==="Efectivo"?"💵":m==="Tarjeta"?"💳":"📱"}</span>{m}
+            </button>
+          ))}
+        </div>
+        <div className="pago-con"><span>Pago con</span><input type="number" placeholder="$0" value={pagoCon} onChange={e => setPagoCon(e.target.value)} /></div>
+        <div className="action-row">
+          <button className="btn-ghost" onClick={() => { setCarrito([]); setCliente(""); }}>Limpiar</button>
+          <button className="btn-save">Guardar</button>
+        </div>
+        <button className="btn-confirm" disabled={carrito.length===0} onClick={confirmar}>✓ Confirmar Pedido ${subtotal}</button>
+      </div>
+    </div>
+  );
+}
+
+function ProductosPage({ productos, deleteProducto, addProducto }) {
+  const [busqueda, setBusqueda] = useState("");
+  const [showModal, setShowModal] = useState(false);
+  const [form, setForm] = useState({nombre:"",desc:"",categoria:"Plato",precio:""});
+
+  const filtered = productos.filter(p => p.nombre.toLowerCase().includes(busqueda.toLowerCase()));
+
+  const handleAdd = () => {
+    if (!form.nombre || !form.precio) return;
+    addProducto({nombre:form.nombre,desc:form.desc,categoria:form.categoria,precio:Number(form.precio)});
+    setShowModal(false); setForm({nombre:"",desc:"",categoria:"Plato",precio:""});
+  };
+
+  return (
+    <div className="page">
+      <div className="page-header">
+        <div><h1 className="page-title">Productos</h1><p className="page-subtitle">{productos.length} productos en el menú</p></div>
+        <button className="btn-primary" onClick={() => setShowModal(true)}>+ Agregar Producto</button>
+      </div>
+      <div className="search-bar" style={{marginBottom:18,background:"#fff"}}>
+        🔍 <input placeholder="Buscar producto..." value={busqueda} onChange={e => setBusqueda(e.target.value)} />
+      </div>
+      <div className="card" style={{padding:0}}>
+        <table className="table">
+          <thead><tr><th>Producto</th><th>Categoría</th><th>Precio</th><th>Estado</th><th>Acciones</th></tr></thead>
+          <tbody>
+            {filtered.map(p => (
+              <tr key={p.id}>
+                <td>
+                  <div style={{display:"flex",alignItems:"center",gap:10}}>
+                    <div className="prod-icon">📦</div>
+                    <div><div style={{fontWeight:600,fontSize:13}}>{p.nombre}</div><div style={{fontSize:11,color:"#999"}}>{p.desc}</div></div>
+                  </div>
+                </td>
+                <td><span className="badge">{p.categoria}</span></td>
+                <td><span className="price-red">${p.precio}</span></td>
+                <td><span className={"estado-badge estado-"+(p.activo?"Pagado":"Cancelado")}>{p.activo?"Activo":"Inactivo"}</span></td>
+                <td><button className="icon-btn">✏️</button><button className="icon-btn del" onClick={() => deleteProducto(p.id)}>🗑️</button></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      {showModal && (
+        <div className="modal-overlay" onClick={() => setShowModal(false)}>
+          <div className="modal" onClick={e => e.stopPropagation()}>
+            <div className="modal-title">Agregar Producto</div>
+            <div className="form-group"><label className="form-label">Nombre</label><input className="form-input" value={form.nombre} onChange={e => setForm({...form,nombre:e.target.value})} placeholder="Nombre del producto" /></div>
+            <div className="form-group"><label className="form-label">Descripción</label><input className="form-input" value={form.desc} onChange={e => setForm({...form,desc:e.target.value})} placeholder="Descripción breve" /></div>
+            <div className="form-group"><label className="form-label">Categoría</label>
+              <select className="form-select" value={form.categoria} onChange={e => setForm({...form,categoria:e.target.value})}>
+                {CATEGORIAS.filter(c => c!=="Todos").map(c => <option key={c}>{c}</option>)}
+              </select>
+            </div>
+            <div className="form-group"><label className="form-label">Precio ($)</label><input className="form-input" type="number" value={form.precio} onChange={e => setForm({...form,precio:e.target.value})} placeholder="0" /></div>
+            <div className="modal-actions">
+              <button className="btn-ghost" onClick={() => setShowModal(false)}>Cancelar</button>
+              <button className="btn-primary" onClick={handleAdd}>Agregar</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ClientesPage({ pedidos }) {
+  const clientes = useMemo(() => {
+    const map = {};
+    pedidos.forEach(p => {
+      if (!map[p.cliente]) map[p.cliente] = {nombre:p.cliente,pedidos:0,total:0,ultimo:p.fecha};
+      map[p.cliente].pedidos++;
+      map[p.cliente].total += p.total;
+      if (p.fecha > map[p.cliente].ultimo) map[p.cliente].ultimo = p.fecha;
+    });
+    return Object.values(map).sort((a,b) => b.total - a.total);
+  }, [pedidos]);
+
+  return (
+    <div className="page">
+      <div className="page-header"><div><h1 className="page-title">Clientes</h1><p className="page-subtitle">{clientes.length} clientes registrados</p></div></div>
+      {clientes.map(c => (
+        <div key={c.nombre} className="cliente-card">
+          <div className="cliente-avatar">{c.nombre[0].toUpperCase()}</div>
+          <div><div className="cliente-name">{c.nombre}</div><div className="cliente-meta">{c.pedidos} pedido{c.pedidos!==1?"s":""} · Último: {new Date(c.ultimo).toLocaleDateString("es-MX")}</div></div>
+          <div className="cliente-total">${c.total}</div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function HistorialPage({ pedidos }) {
+  const [filtro, setFiltro] = useState("Todos");
+  const [busqueda, setBusqueda] = useState("");
+  const [expanded, setExpanded] = useState(null);
+
+  const filtered = pedidos.filter(p =>
+    (filtro==="Todos" || p.estado===filtro) &&
+    (p.cliente.toLowerCase().includes(busqueda.toLowerCase()) || String(p.id).includes(busqueda))
+  );
+
+  return (
+    <div className="page">
+      <div className="page-header"><div><h1 className="page-title">Historial de Pedidos</h1><p className="page-subtitle">{pedidos.length} pedidos registrados</p></div></div>
+      <div className="search-bar" style={{marginBottom:14,background:"#fff"}}>
+        🔍 <input placeholder="Buscar por cliente o folio..." value={busqueda} onChange={e => setBusqueda(e.target.value)} />
+      </div>
+      <div className="filter-tabs">
+        {["Todos","Pagado","Consumiendo","Cancelado"].map(f => (
+          <button key={f} className={"filter-tab"+(filtro===f?" active":"")} onClick={() => setFiltro(f)}>{f}</button>
+        ))}
+      </div>
+      {filtered.map(p => (
+        <div key={p.id}>
+          <div className="pedido-row" onClick={() => setExpanded(expanded===p.id ? null : p.id)}>
+            <div className="pedido-icon">🧾</div>
+            <div className="pedido-info">
+              <div style={{display:"flex",alignItems:"center",gap:8}}>
+                <span className="pedido-folio">#{p.id}</span>
+                <span className={"estado-badge estado-"+p.estado}>{p.estado}</span>
+              </div>
+              <div className="pedido-meta">👤 {p.cliente} · 📅 {new Date(p.fecha).toLocaleDateString("es-MX",{day:"2-digit",month:"short"})}, {new Date(p.fecha).toLocaleTimeString("es-MX",{hour:"2-digit",minute:"2-digit"})}</div>
+            </div>
+            <div className="pedido-total"><div className="pedido-amount">${p.total}</div><div className="pedido-method">{p.metodo}</div></div>
+            <span style={{color:"#999",fontSize:16}}>{expanded===p.id?"▲":"▽"}</span>
+          </div>
+          {expanded===p.id && (
+            <div className="pedido-detail">
+              {p.items.map((item,i) => <div key={i} className="detail-item"><span>{item.qty}x {item.nombre}</span><span>${item.precio*item.qty}</span></div>)}
+              <div className="detail-item" style={{fontWeight:700,color:"#1a1a1a",borderTop:"1px solid #ece9e4",paddingTop:8,marginTop:4}}>
+                <span>Total</span><span>${p.total}</span>
+              </div>
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function AjustesPage({ negocioNombre, setNegocioNombre, pedidos, showToast }) {
+  const [nombre, setNombre] = useState(negocioNombre);
+  const hoy = pedidos.filter(p => p.estado !== "Cancelado");
+  const totalHoy = hoy.reduce((s, p) => s + p.total, 0);
+  const ticketProm = hoy.length ? totalHoy / hoy.length : 0;
+  const porMetodo = hoy.reduce((acc, p) => { acc[p.metodo] = (acc[p.metodo]||0) + p.total; return acc; }, {});
+
+  return (
+    <div className="page">
+      <div className="page-header"><div><h1 className="page-title">Ajustes</h1><p className="page-subtitle">Configuración y corte de caja</p></div></div>
+      <div className="settings-section">
+        <div className="settings-title">🏪 Nombre del Negocio</div>
+        <div className="settings-input-row" style={{marginTop:12}}>
+          <input className="settings-input" value={nombre} onChange={e => setNombre(e.target.value)} />
+          <button className="btn-dark" onClick={() => { setNegocioNombre(nombre); showToast("✅ Nombre guardado"); }}>💾 Guardar</button>
+        </div>
+      </div>
+      <div className="settings-section">
+        <div className="settings-title">🧮 Corte de Caja</div>
+        <p className="settings-sub">{new Date().toLocaleDateString("es-MX")}</p>
+        <div className="corte-grid">
+          <div className="corte-card main"><div className="corte-label">Total del Día</div><div className="corte-value">${totalHoy.toLocaleString()}</div></div>
+          <div className="corte-card white"><div className="corte-label">🧾 Tickets</div><div className="corte-value">{hoy.length}</div></div>
+          <div className="corte-card white"><div className="corte-label">💲 Promedio</div><div className="corte-value">${ticketProm.toFixed(2)}</div></div>
+        </div>
+        <div style={{fontWeight:600,fontSize:13,color:"#1a1a1a",marginBottom:10}}>Desglose por Método de Pago</div>
+        <div className="metodo-row">
+          {["Efectivo","Tarjeta","Transfer"].map(m => (
+            <div key={m} className="metodo-card">
+              <span className="metodo-icon">{m==="Efectivo"?"💵":m==="Tarjeta"?"💳":"📱"}</span>
+              <div><div className="metodo-label">{m}</div><div className="metodo-val">${porMetodo[m]||0}</div></div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+</body>
+</html>
